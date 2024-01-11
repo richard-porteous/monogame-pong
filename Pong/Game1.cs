@@ -1,6 +1,10 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+//using Microsoft.Xna.Framework.Storage;
 using Microsoft.Xna.Framework.Input;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Pong
 {
@@ -8,8 +12,90 @@ namespace Pong
     {
         MySprite ball;
         MySprite face;
-        
-        public Vector2 faceTexturesize = new Vector2(50, 29);
+        MyInput myInput;
+
+
+        //public Vector2 faceTexturesize = new Vector2(50, 29);
+
+
+
+        class MyInput
+        {
+            private Dictionary<Keys, string> myInputDict = new Dictionary<Keys, string>(){
+                                  {Keys.Left, "left"},
+                                  {Keys.Right, "right"},
+                                  {Keys.Up, "up"},
+                                  {Keys.Down, "down"} };
+            private List<string> keyQueue = new List<string>();
+            private string lastKeyPress = "none";
+
+            public MyInput()
+            {
+                //My_dict1.Add(Keys.Left, "left");
+                //My_dict1.Add(Keys.Right, "right");
+                //My_dict1.Add(Keys.Up, "up");
+                //My_dict1.Add(Keys.Down, "down");
+                //My_dict1.Add(Keys.None, "none"); //?? does this work?
+            }
+
+            private bool IsExit()
+            {
+                if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+                    return true;
+                return false;
+            }
+
+            public bool Update()
+            {
+                if (IsExit())
+                {
+                    keyQueue.Clear();
+                    return false;
+                }
+
+                var kstate = Keyboard.GetState();
+                
+                foreach(KeyValuePair<Keys, string> currKey in myInputDict)
+                {
+                    // Append the current keypress. remove if already there.
+                    if (kstate.IsKeyDown(currKey.Key))
+                    {
+                        //if (myInputDict.ContainsKey(currKey.Key))
+                        keyQueue.Remove(currKey.Value);
+                        keyQueue.Append(currKey.Value);
+                        lastKeyPress = currKey.Value;
+                    } 
+                    else
+                    //if (kstate.IsKeyUp(currKey.Key))
+                    {
+                        if (keyQueue.Count > 0)
+                            keyQueue.Remove(currKey.Value);
+                    }
+                }
+                return true;
+            }
+
+            private string GetDirectionInput()
+            {
+                if (keyQueue.Count > 0)
+                    return keyQueue[0];
+                return lastKeyPress;
+            }
+            public Vector2 GetCurrentInputDirection()
+            {
+                string dir_str = GetDirectionInput();
+                if (dir_str == "up") return new Vector2(0, 1);
+                if (dir_str == "down") return new Vector2(0, -1);
+                if (dir_str == "left") return new Vector2(1, 0);
+                if (dir_str == "right") return new Vector2(-1, 0);
+                //if (dir_str == "none")
+                return new Vector2(0, 0);
+            }
+
+        }
+
+
+
 
         class MySprite
         {
@@ -17,6 +103,7 @@ namespace Pong
             private Vector2 tileSize = new Vector2(80, 80);
             private Vector2 position = new Vector2();
             private Vector2 gridPosition = new Vector2();
+            private float speed = 100f;
 
             public Vector2 GridPosition
             {
@@ -33,7 +120,7 @@ namespace Pong
             }
 
             public Texture2D Texture { get => texture; set => texture = value; }
-
+            public float Speed { get => speed; set => speed = value; }
 
             public MySprite(Vector2 position, Texture2D texture = null)
             {
@@ -61,7 +148,16 @@ namespace Pong
             {
                 batch.Draw(Texture, position, null, Color.White,0, GetSpriteCenter(), Vector2.One,SpriteEffects.None,0f);
             }
+
+            public void Move(Vector2 dir, float deltaTime)
+            {
+                position.Y -= dir.Y * speed * deltaTime;
+                position.X -= dir.X * speed * deltaTime;
+            }
         }
+
+
+
 
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
@@ -78,6 +174,7 @@ namespace Pong
             // TODO: Add your initialization logic here
             ball = new MySprite(Vector2.Zero);
             face = new MySprite(Vector2.Zero);
+            myInput = new MyInput();
 
             base.Initialize();
         }
@@ -93,10 +190,14 @@ namespace Pong
 
         protected override void Update(GameTime gameTime)
         {
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+            if (!myInput.Update())
                 Exit();
 
             // TODO: Add your update logic here
+
+            Vector2 direction = myInput.GetCurrentInputDirection();
+
+            ball.Move(direction, (float)gameTime.ElapsedGameTime.TotalSeconds);
 
             base.Update(gameTime);
         }
