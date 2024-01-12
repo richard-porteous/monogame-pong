@@ -22,7 +22,7 @@ namespace Pong
         //public Vector2 faceTexturesize = new Vector2(50, 29);
 
 
-
+        
         class MyInput
         {
             private Dictionary<Keys, string> myInputDict = new Dictionary<Keys, string>(){
@@ -101,29 +101,47 @@ namespace Pong
             private Vector2 tileSize = new Vector2(80, 80);
             private Vector2 position = new Vector2();
             private Vector2 gridPosition = new Vector2();
+            private Vector2 gridEndPosition = new Vector2();
+
             private float speed = 100f;
-
-            public Vector2 GridPosition
-            {
-                get
-                {
-                    return gridPosition;
-                }
-
-                set
-                {
-                    gridPosition = value;
-                    position = GetCenteredPosition();
-                }
-            }
 
             public Texture2D Texture { get => texture; set => texture = value; }
             public float Speed { get => speed; set => speed = value; }
-            public Vector2 Position { get => position;}
+            public Vector2 Position { get => position; }
+
+            /// <summary>
+            /// Marks start of move grid position
+            /// </summary>
+            /// <returns></returns>
+            public Vector2 GetGridPosition()
+            {
+                return gridPosition;
+            }
+
+            /// <summary>
+            /// This changes position to be centerd on that grid and marks start of move grid position
+            /// </summary>
+            /// <param name="value"></param>
+            public void SetGridPosition(Vector2 value)
+            {
+                gridPosition = value;
+                position = GetCenteredPositionFromGridPos(gridPosition);
+            }
+
+            public Vector2 GetGridEndPosition()
+            {
+                return gridEndPosition;
+            }
+
+            public void SetGridEndPosition(Vector2 value)
+            {
+                gridEndPosition = value;
+            }
 
             public MySprite(Vector2 position, Texture2D texture = null)
             {
-                GridPosition = position;
+                SetGridPosition(position);
+                SetGridEndPosition(position);
                 Texture = texture;
             }
 
@@ -137,26 +155,52 @@ namespace Pong
                 return new Vector2(tileSize.X / 2, tileSize.Y / 2);
             }
 
-            private Vector2 GetCenteredPosition()
+            private Vector2 GetCenteredPositionFromGridPos(Vector2 gridPos)
             {
                 //return new Vector2(GetCenter().X + position.X * texture.Width, GetCenter().Y + position.Y * texture.Height);
-                return (gridPosition * tileSize) + GetTileCenter();
+                return (gridPos * tileSize) + GetTileCenter();
             }
 
+            /// <summary>
+            /// Draw the texture at the centered position set by the sprite
+            /// </summary>
+            /// <param name="batch"></param>
             public void Draw(SpriteBatch batch)
             {
                 batch.Draw(Texture, Position, null, Color.White,0, GetSpriteCenter(), Vector2.One,SpriteEffects.None,0f);
             }
 
+            /// <summary>
+            /// Allows direct setting of position - useful when not using Move i.e. second+ sprite
+            /// </summary>
+            /// <param name="pos"></param>
             public void SetPXPos(Vector2 pos)
             {
                 position = pos;
             }
 
+            /// <summary>
+            /// Move follows delta time, speed, and direction
+            /// Use GridMove if wanting grid movement
+            /// </summary>
+            /// <param name="dir"></param>
+            /// <param name="deltaTime"></param>
             public void Move(Vector2 dir, float deltaTime)
             {
                 position.Y -= dir.Y * speed * deltaTime;
                 position.X -= dir.X * speed * deltaTime;
+            }
+
+            /// <summary>
+            /// Move follows delta time, speed, and direction
+            /// Keeps track of a grid move and try's to keep contineous movement smooth
+            /// Use Move if not concerened about Grid
+            /// </summary>
+            /// <param name="dir"></param>
+            /// <param name="deltaTime"></param>
+            public void GridMove(Vector2 dir, float deltaTime)
+            {
+                Move(dir, deltaTime);
             }
         }
 
@@ -192,7 +236,8 @@ namespace Pong
 
             public void Move(Vector2 dir, float deltaTime)
             {
-                ball.Move(dir, deltaTime);
+                //Move first sprite set the rest
+                ball.GridMove(dir, deltaTime);
                 face.SetPXPos(ball.Position);
             }
         }
