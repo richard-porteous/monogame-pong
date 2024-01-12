@@ -35,11 +35,6 @@ namespace Pong
 
             public MyInput()
             {
-                //My_dict1.Add(Keys.Left, "left");
-                //My_dict1.Add(Keys.Right, "right");
-                //My_dict1.Add(Keys.Up, "up");
-                //My_dict1.Add(Keys.Down, "down");
-                //My_dict1.Add(Keys.None, "none"); //?? does this work?
             }
 
             private bool IsExit()
@@ -64,9 +59,8 @@ namespace Pong
                     // Append the current keypress. remove if already there.
                     if (kstate.IsKeyDown(currKey.Key))
                     {
-                        //if (myInputDict.ContainsKey(currKey.Key))
-                        keyQueue.Remove(currKey.Value);
-                        keyQueue.Append(currKey.Value);
+                        if (!myInputDict.ContainsKey(currKey.Key))
+                            keyQueue.Append(currKey.Value);
                         lastKeyPress = currKey.Value;
                     } 
                     else
