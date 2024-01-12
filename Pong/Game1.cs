@@ -10,10 +10,14 @@ namespace Pong
 {
     public class Game1 : Game
     {
-        MySprite ball;
-        MySprite face;
+        //MySprite ball;
+        //MySprite face;
         MyInput myInput;
 
+        private GraphicsDeviceManager _graphics;
+        private SpriteBatch _spriteBatch;
+
+        Player player;
 
         //public Vector2 faceTexturesize = new Vector2(50, 29);
 
@@ -121,6 +125,7 @@ namespace Pong
 
             public Texture2D Texture { get => texture; set => texture = value; }
             public float Speed { get => speed; set => speed = value; }
+            public Vector2 Position { get => position;}
 
             public MySprite(Vector2 position, Texture2D texture = null)
             {
@@ -146,7 +151,12 @@ namespace Pong
 
             public void Draw(SpriteBatch batch)
             {
-                batch.Draw(Texture, position, null, Color.White,0, GetSpriteCenter(), Vector2.One,SpriteEffects.None,0f);
+                batch.Draw(Texture, Position, null, Color.White,0, GetSpriteCenter(), Vector2.One,SpriteEffects.None,0f);
+            }
+
+            public void SetPXPos(Vector2 pos)
+            {
+                position = pos;
             }
 
             public void Move(Vector2 dir, float deltaTime)
@@ -156,11 +166,46 @@ namespace Pong
             }
         }
 
+        class Player
+        {
+
+            private string[] textureNames = { "blue_body_squircle", "face_a" };
+            private MySprite ball;
+            private MySprite face;
+
+            public string[] TextureNames { get => textureNames; }
+
+
+            public Player()
+            {
+                ball = new MySprite(Vector2.Zero);
+                face = new MySprite(Vector2.Zero);
+            }
+
+            public void SetTextures(string name, Texture2D texture)
+            {
+                if (name == textureNames[0])
+                    ball.Texture = texture;
+                if (name == textureNames[1])
+                    face.Texture = texture;
+            }
+
+            public void Draw(SpriteBatch batch)
+            {
+                ball.Draw(batch);
+                face.Draw(batch);
+            }
+
+            public void Move(Vector2 dir, float deltaTime)
+            {
+                ball.Move(dir, deltaTime);
+                face.SetPXPos(ball.Position);
+            }
+        }
 
 
 
-        private GraphicsDeviceManager _graphics;
-        private SpriteBatch _spriteBatch;
+
 
         public Game1()
         {
@@ -172,8 +217,7 @@ namespace Pong
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-            ball = new MySprite(Vector2.Zero);
-            face = new MySprite(Vector2.Zero);
+            player = new Player();
             myInput = new MyInput();
 
             base.Initialize();
@@ -184,8 +228,10 @@ namespace Pong
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
             // TODO: use this.Content to load your game content here
-            ball.Texture = Content.Load<Texture2D>("blue_body_squircle");
-            face.Texture = Content.Load<Texture2D>("face_a");
+            foreach (string a in player.TextureNames)
+            {
+                player.SetTextures(a, Content.Load<Texture2D>(a));
+            }
         }
 
         protected override void Update(GameTime gameTime)
@@ -193,12 +239,11 @@ namespace Pong
             if (!myInput.Update())
                 Exit();
 
-            // TODO: Add your update logic here
-
             Vector2 direction = myInput.GetCurrentInputDirection();
 
-            ball.Move(direction, (float)gameTime.ElapsedGameTime.TotalSeconds);
+            player.Move(direction, (float)gameTime.ElapsedGameTime.TotalSeconds);
 
+            // the base update - do not touch
             base.Update(gameTime);
         }
 
@@ -208,9 +253,8 @@ namespace Pong
 
             // TODO: Add your drawing code here
             _spriteBatch.Begin();
-            ball.Draw(_spriteBatch); //.Draw(squircleTexture, new Vector2(0, 0), Color.White);
 
-            face.Draw(_spriteBatch); //.Draw(faceTexture, new Vector2(squircleTexture.Width/2 - faceTexturesize.X / 2, squircleTexture.Height / 2 - faceTexturesize.Y / 2), Color.White);
+            player.Draw(_spriteBatch);
 
             _spriteBatch.End();
 
