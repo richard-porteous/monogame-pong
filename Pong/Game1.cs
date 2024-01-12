@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Pong
@@ -56,18 +57,19 @@ namespace Pong
                 
                 foreach(KeyValuePair<Keys, string> currKey in myInputDict)
                 {
-                    // Append the current keypress. remove if already there.
+                    // Append the current keypress.
                     if (kstate.IsKeyDown(currKey.Key))
                     {
-                        if (!myInputDict.ContainsKey(currKey.Key))
-                            keyQueue.Append(currKey.Value);
+                        if (!keyQueue.Contains(currKey.Value))
+                        {
+                            keyQueue.Add(currKey.Value);
+
+                        }
                         lastKeyPress = currKey.Value;
                     } 
                     else
-                    //if (kstate.IsKeyUp(currKey.Key))
                     {
-                        if (keyQueue.Count > 0)
-                            keyQueue.Remove(currKey.Value);
+                        keyQueue.Remove(currKey.Value);
                     }
                 }
                 return true;
@@ -75,8 +77,11 @@ namespace Pong
 
             private string GetDirectionInput()
             {
+                
                 if (keyQueue.Count > 0)
+                {
                     return keyQueue[0];
+                }
                 return lastKeyPress;
             }
             public Vector2 GetCurrentInputDirection()
@@ -86,7 +91,7 @@ namespace Pong
                 if (dir_str == "down") return new Vector2(0, -1);
                 if (dir_str == "left") return new Vector2(1, 0);
                 if (dir_str == "right") return new Vector2(-1, 0);
-                //if (dir_str == "none")
+
                 return new Vector2(0, 0);
             }
 
