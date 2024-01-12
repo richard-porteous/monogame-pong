@@ -2,10 +2,8 @@
 using Microsoft.Xna.Framework.Graphics;
 //using Microsoft.Xna.Framework.Storage;
 using Microsoft.Xna.Framework.Input;
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 
 namespace Pong
 {
@@ -87,10 +85,10 @@ namespace Pong
             public Vector2 GetCurrentInputDirection()
             {
                 string dir_str = GetDirectionInput();
-                if (dir_str == "up") return new Vector2(0, 1);
-                if (dir_str == "down") return new Vector2(0, -1);
-                if (dir_str == "left") return new Vector2(1, 0);
-                if (dir_str == "right") return new Vector2(-1, 0);
+                if (dir_str == "up") return new Vector2(0, -1);
+                if (dir_str == "down") return new Vector2(0, 1);
+                if (dir_str == "left") return new Vector2(-1, 0);
+                if (dir_str == "right") return new Vector2(1, 0);
 
                 return new Vector2(0, 0);
             }
@@ -107,8 +105,9 @@ namespace Pong
             private Vector2 position = new Vector2();
             private Vector2 gridPosition = new Vector2();
             private Vector2 gridEndPosition = new Vector2();
+            private Vector2 gridMoveDirection = new Vector2(); 
 
-            private float speed = 100f;
+            private float speed = 200f;
 
             public Texture2D Texture { get => texture; set => texture = value; }
             public float Speed { get => speed; set => speed = value; }
@@ -192,10 +191,14 @@ namespace Pong
             /// <param name="deltaTime"></param>
             public void Move(Vector2 dir, float deltaTime)
             {
-                position.Y -= dir.Y * speed * deltaTime;
-                position.X -= dir.X * speed * deltaTime;
+                position.Y += dir.Y * speed * deltaTime;
+                position.X += dir.X * speed * deltaTime;
             }
 
+            private bool IsEndOfMove(float dt_distance)
+            {
+                return Vector2.Distance(position, GetCenteredPositionFromGridPos(gridEndPosition)) < dt_distance; //abs(math.dist(self.rect.center, self.end_move_pos)) <= abs(dt_distance)
+            }
             /// <summary>
             /// Move follows delta time, speed, and direction
             /// Keeps track of a grid move and try's to keep contineous movement smooth
@@ -205,7 +208,14 @@ namespace Pong
             /// <param name="deltaTime"></param>
             public void GridMove(Vector2 dir, float deltaTime)
             {
-                Move(dir, deltaTime);
+                if (IsEndOfMove(deltaTime * speed)) 
+                {
+                    gridMoveDirection = dir;
+                    SetGridPosition(gridEndPosition);
+                    SetGridEndPosition(gridEndPosition + dir);
+                }
+                else
+                    Move(gridMoveDirection, deltaTime);
             }
         }
 
