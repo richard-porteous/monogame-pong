@@ -17,10 +17,6 @@ namespace Pong
         private SpriteBatch _spriteBatch;
 
         Player player;
-
-        //public Vector2 faceTexturesize = new Vector2(50, 29);
-
-
         
         class MyInput
         {
